@@ -12,8 +12,9 @@ Original project by [Peter Binggeser](https://github.com/pbinggeser) didn't have
 - [x] [JSX/TSX](http://www.typescriptlang.org/docs/handbook/jsx.html)
 - [x] [TSLint](https://palantir.github.io/tslint/)
 - [x] [Github pages](https://pages.github.com/)
-- [ ] Redux
-- [ ] Material-Ui
+- [x] Redux
+- [ ] FPS counter
+- [ ] Responive web (Material-Ui/Bootstrap)
 - [ ] Machine learning - This project uses [neataptic](https://github.com/wagenaartje/neataptic)
 - [ ] Demystify the actual neural networks (NN)
 - [ ] More coming... 
