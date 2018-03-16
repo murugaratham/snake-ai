@@ -3,8 +3,7 @@ import * as d3 from 'd3';
 import * as cola from 'webcola';
 import { calculateQ, sleep, atoi } from './utilities';
 import { IStoreState } from '../types';
-const neataptic = require('neataptic');
-const { Neat, architect, methods } = neataptic;
+const neataptic = require('./neataptic').neataptic;
 
 interface IGraphLineItem {
   score: number;
@@ -81,34 +80,37 @@ class Manager {
 
   private initNN() {
     const elitismPercent = atoi(this.config.elitismPercentReducer.value);
-    this.neat = new Neat(this.inputLayerSize, this.outputLayerSize, null, {
+    this.neat = new neataptic.Neat(this.inputLayerSize, this.outputLayerSize, null, {
       mutation: [
-        methods.mutation.ADD_NODE,
-        methods.mutation.SUB_NODE,
-        methods.mutation.ADD_CONN,
-        methods.mutation.SUB_CONN,
-        methods.mutation.MOD_WEIGHT,
-        methods.mutation.MOD_BIAS,
-        methods.mutation.MOD_ACTIVATION,
-        methods.mutation.ADD_GATE,
-        methods.mutation.SUB_GATE,
-        methods.mutation.ADD_SELF_CONN,
-        methods.mutation.SUB_SELF_CONN,
-        methods.mutation.ADD_BACK_CONN,
-        methods.mutation.SUB_BACK_CONN
+        neataptic.methods.mutation.ADD_NODE,
+        neataptic.methods.mutation.SUB_NODE,
+        neataptic.methods.mutation.ADD_CONN,
+        neataptic.methods.mutation.SUB_CONN,
+        neataptic.methods.mutation.MOD_WEIGHT,
+        neataptic.methods.mutation.MOD_BIAS,
+        neataptic.methods.mutation.MOD_ACTIVATION,
+        neataptic.methods.mutation.ADD_GATE,
+        neataptic.methods.mutation.SUB_GATE,
+        neataptic.methods.mutation.ADD_SELF_CONN,
+        neataptic.methods.mutation.SUB_SELF_CONN,
+        neataptic.methods.mutation.ADD_BACK_CONN,
+        neataptic.methods.mutation.SUB_BACK_CONN
       ],
       popsize: this.config.populationReducer.value,
       murationRate: this.mutationRate,
       elitism: Math.round(elitismPercent / 100 * atoi(this.config.populationReducer.value)),
-      network: new architect.Random(this.inputLayerSize, this.hiddenLayerSize, this.outputLayerSize)
+      network: new neataptic.architect.Random(this.inputLayerSize, this.hiddenLayerSize, this.outputLayerSize)
     });
   }
 
   private async tick() {
     if (!this.started || this.paused) { return; }
 
-    const sleepTime = this.config.highSpeedReducer.value === true ? 1 : 50;    
-    await sleep(sleepTime);
+    // const sleepTime = this.config.highSpeedReducer.value === true ? 1 : 50;    
+    // await sleep(sleepTime);
+    if (!this.config.highSpeedReducer.value) {
+      await sleep(50);
+    }
     const that = this;
     let hasEveryoneDied = true;
     let areAllAliveSnakesNegative = true;
