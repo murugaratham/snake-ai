@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/murugaratham/snake-ai.svg?branch=master)](https://travis-ci.org/murugaratham/snake-ai)
+
 # snake-ai
 Credits to https://github.com/pbinggeser/snake-ai
 ## Quick Start
