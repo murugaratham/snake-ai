@@ -4,8 +4,9 @@ export interface IStoreState {
     running: boolean;
     paused: boolean;
     snakes: Snake[];
+    isPortalActive: boolean;
     hitWallReducer: ISwitchState;
-    eatSelfReducer: ISwitchState;
+    hitSelfReducer: ISwitchState;
     growWhenEatReducer: ISwitchState;
     highSpeedReducer: ISwitchState;
     populationReducer: IFieldState;

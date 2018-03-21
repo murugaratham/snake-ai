@@ -1,17 +1,17 @@
 import Switch from '../components/Switch';
-import * as actions from '../actions/';
 import { connect } from 'react-redux';
 import { IStoreState } from '../types';
+import * as actions from '../actions/';
 
 const mapStateToProps = (state: IStoreState) => {
     return {
-        label: state.eatSelfReducer.label,
-        value: state.eatSelfReducer.value
+        label: state.hitSelfReducer.label,
+        value: state.hitSelfReducer.value
     };
 };
 
 const mapDispatchToProps = {
-    onToggle: actions.toggleEatSelf
+    onToggle: actions.toggleHitSelf
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Switch);

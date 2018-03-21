@@ -1,6 +1,6 @@
 import { combineReducers } from 'redux';
 import { IStoreState, ISwitchState } from '../types';
-import eatSelfReducer from './eatSelfReducer';
+import hitSelfReducer from './hitSelfReducer';
 import hitWallReducer from './borderWallReducer';
 import growWhenEatReducer from './growWhenEatReducer';
 import highSpeedReducer from './highSpeedReducer';
@@ -15,7 +15,7 @@ import snakeStartingLengthReducer from './snakeStartingLengthReducer';
 
 const rootReducer = combineReducers<IStoreState>({
   hitWallReducer,
-  eatSelfReducer,
+  hitSelfReducer,
   growWhenEatReducer,
   highSpeedReducer,
   populationReducer,
@@ -29,6 +29,7 @@ const rootReducer = combineReducers<IStoreState>({
   running: (state = {}) => state,
   paused: (state = {}) => state,
   snakes: (state = {}) => state,
+  isPortalActive: (state = {}) => state,
 });
 
 export const spliceStateForSwitch = (state: ISwitchState) => {

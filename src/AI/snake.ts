@@ -31,6 +31,12 @@ export interface IBrain {
   activate: (data: number[]) => number[];
 }
 
+export interface ISnakeDBModel {
+  id: number;
+  score: number;
+  brain: any;  
+}
+
 class Snake {
   key: string;
   data: number[];
@@ -82,7 +88,10 @@ class Snake {
     this.turnAngle = 90;
     this.makeFood();
     this.lastDirection = undefined;
-    this.canvasContext = (<HTMLCanvasElement> document.getElementById(`snake-canvas-${this.index}`)).getContext('2d')!;
+    // this.canvasContext = (<HTMLCanvasElement> document.getElementById(`snake-canvas-${this.index}`))
+    //                                                   .getContext('2d', { alpha: false })!;
+    this.canvasContext = (<HTMLCanvasElement> document.getElementById(`snake-canvas-${this.index}`))
+                                                      .getContext('2d')!;
   }
 
   updateSettings(config: IStoreState) {
@@ -101,91 +110,13 @@ class Snake {
     this.canvasContext.strokeRect(0, 0, this.displaySize, this.displaySize);
   }
 
-  showCanvas() {
-    this.canvasContext.clearRect(0, 0, this.displaySize, this.displaySize);   
-    this.drawSnakeOnCanvas();
-    this.drawFoodOnCanvas();
-    this.drawScoreOnCanvas();
+  render() {
+    this.look();
+    this.showCanvas();
+    this.moveCanvas();
   }
 
-  moveCanvas() {
-    // clone the head so that we don't mess with the actual snake in the state
-    let eating = false;
-    let died = false;
-    const head = JSON.parse(JSON.stringify(this.state.body[0]));
-    this.getBestDirectionFromNN();
-    this.setNewSnakeHead(head, this.direction);
-
-    if (this.config.hitWallReducer.value) {
-      if (head.x < 0 || head.x >= this.gridResolution) {
-        died = true;
-      }
-      if (head.y < 0 || head.y >= this.gridResolution) {
-        died = true;
-      }
-    } else {
-      if (head.x < 0) { head.x = this.gridResolution - 1; } // head.x = 0;
-      if (head.x >= this.gridResolution) { head.x = 0; } // head.x = this.gridResolution - 1;
-      if (head.y < 0) { head.y = this.gridResolution - 1; }
-      if (head.y >= this.gridResolution) { head.y = 0; }
-    }
-
-    // snakes hit themselves
-    if (this.state.body.length > 1 && this.config.eatSelfReducer.value) {
-      for (let i = 2; i < this.state.body.length; i++) {
-        if (head.x === this.state.body[i].x && head.y === this.state.body[i].y) {
-          died = true;
-          break;
-        }
-      }
-    }
-    // snake keeps going round in circles
-    if (this.currentScore < -50) { died = true; }
-
-    if (!died) {
-      // ate food
-      if (head.x === this.state.food.x && head.y === this.state.food.y) {
-        eating = true;
-        this.currentScore += this.foodScore;
-        this.lastDistance = this.gridResolution * 2;
-      }
-      // add 1 square to the "front" of the snake
-      this.state.body.unshift(head);
-      // remove 1 square from "end" of the snake if user select "grow when eating"
-      if (!eating || !this.config.growWhenEatReducer.value) {
-        this.state.body.pop();
-      }
-      // calculate whether snake is moving towards/away from food
-      const d = distance(head.x, head.y, this.state.food.x, this.state.food.y);
-      if (d < this.lastDistance) {
-        this.currentScore += this.moveTowardsFoodScore;
-      } else {
-        this.currentScore += this.moveAwayFoodScore;
-      }
-      this.lastDistance = d;
-    }
-    // update best score if needed
-    if (this.currentScore > this.brain.score) {
-      this.bestScore = this.currentScore;
-    }
-
-    if (this.deaths === 0) {
-      this.firstAttemptScore = this.currentScore;
-      this.brain.score = this.currentScore;
-    }
-
-    if (died) {
-      this.paintSnakeRed();
-      
-      this.deaths++;
-      this.restart();
-      this.makeFood();
-      return;
-    }
-    if (eating) { this.makeFood(); }
-  }
-
-  look() {
+  private look() {
     if (this.dead) { return; }
     const a = angleToPoint(
       this.state.body[0].x,
@@ -276,6 +207,90 @@ class Snake {
     });
 
     this.data = data;
+  }
+
+  private showCanvas() {
+    this.canvasContext.clearRect(0, 0, this.displaySize, this.displaySize);   
+    this.drawSnakeOnCanvas();
+    this.drawFoodOnCanvas();
+    this.drawScoreOnCanvas();
+  }
+
+  private moveCanvas() {
+    // clone the head so that we don't mess with the actual snake in the state
+    let eating = false;
+    let died = false;
+    const head = JSON.parse(JSON.stringify(this.state.body[0]));
+    this.getBestDirectionFromNN();
+    this.setNewSnakeHead(head, this.direction);
+
+    if (this.config.hitWallReducer.value) {
+      if (head.x < 0 || head.x >= this.gridResolution) {
+        died = true;
+      }
+      if (head.y < 0 || head.y >= this.gridResolution) {
+        died = true;
+      }
+    } else {
+      if (head.x < 0) { head.x = this.gridResolution - 1; } // head.x = 0;
+      if (head.x >= this.gridResolution) { head.x = 0; } // head.x = this.gridResolution - 1;
+      if (head.y < 0) { head.y = this.gridResolution - 1; }
+      if (head.y >= this.gridResolution) { head.y = 0; }
+    }
+
+    // snakes hit themselves
+    if (this.state.body.length > 1 && this.config.hitSelfReducer.value) {
+      for (let i = 2; i < this.state.body.length; i++) {
+        if (head.x === this.state.body[i].x && head.y === this.state.body[i].y) {
+          died = true;
+          break;
+        }
+      }
+    }
+    // snake keeps going round in circles
+    if (this.currentScore < -50) { died = true; }
+
+    if (!died) {
+      // ate food
+      if (head.x === this.state.food.x && head.y === this.state.food.y) {
+        eating = true;
+        this.currentScore += this.foodScore;
+        this.lastDistance = this.gridResolution * 2;
+      }
+      // add 1 square to the "front" of the snake
+      this.state.body.unshift(head);
+      // remove 1 square from "end" of the snake if user select "grow when eating"
+      if (!eating || !this.config.growWhenEatReducer.value) {
+        this.state.body.pop();
+      }
+      // calculate whether snake is moving towards/away from food
+      const d = distance(head.x, head.y, this.state.food.x, this.state.food.y);
+      if (d < this.lastDistance) {
+        this.currentScore += this.moveTowardsFoodScore;
+      } else {
+        this.currentScore += this.moveAwayFoodScore;
+      }
+      this.lastDistance = d;
+    }
+    // update best score if needed
+    if (this.currentScore > this.brain.score) {
+      this.bestScore = this.currentScore;
+    }
+
+    if (this.deaths === 0) {
+      this.firstAttemptScore = this.currentScore;
+      this.brain.score = this.currentScore;
+    }
+
+    if (died) {
+      this.paintSnakeRed();
+      
+      this.deaths++;
+      this.restart();
+      this.makeFood();
+      return;
+    }
+    if (eating) { this.makeFood(); }
   }
   
   private cacheSettings() {

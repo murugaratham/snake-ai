@@ -13,14 +13,10 @@ Original project by [Peter Binggeser](https://github.com/pbinggeser) didn't have
 - [x] [TSLint](https://palantir.github.io/tslint/)
 - [x] [Github pages](https://pages.github.com/)
 - [x] Redux
-- [ ] FPS counter
-- [ ] Responive web (Material-Ui/Bootstrap)
+- [x] Responive web (Material-Ui/Bootstrap)
+- [x] Visualize the NN
+- [x] Rehydrate reducers
+- [x] local storage for best trained snake brain & letting user to load 
 - [ ] Machine learning - This project uses [neataptic](https://github.com/wagenaartje/neataptic)
 - [ ] Demystify the actual neural networks (NN)
 - [ ] More coming... 
-## To do
-
-* Visualizing the NN - Clicking on snake grid to display the currently mutated form on the NN 
-* Persisting snakes' "brain" into local storage 
-* Suggesting to user to reload the "brain" 
-

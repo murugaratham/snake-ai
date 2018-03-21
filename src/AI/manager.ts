@@ -1,10 +1,11 @@
-import Snake, { ISnake } from './snake';
+import Snake, { ISnake, ISnakeDBModel } from './snake';
 import * as d3 from 'd3';
 import * as cola from 'webcola';
-import { calculateQ, sleep, atoi } from './utilities';
+import { calculateQ, atoi, sleep } from './utilities';
 import { IStoreState } from '../types';
 const neataptic = require('./neataptic').neataptic;
-
+import db from './db';
+import Dexie from 'dexie';
 interface IGraphLineItem {
   score: number;
   generation: number;
@@ -30,7 +31,9 @@ class Manager {
   hiddenLayerSize: number;
   outputLayerSize: number;
   subscriber: any;
-
+  private snakeTable: Dexie.Table<any, any>;
+  private hydrateSnake: boolean;
+  // tslint:disable-next-line:member-ordering
   constructor(config: IStoreState) {
     this.started = false;
     this.paused = false;
@@ -43,17 +46,28 @@ class Manager {
     this.hiddenLayerSize = 1;
     this.outputLayerSize = 3;
     this.mutationRate = 0.3;
+    this.snakeTable = db.table('snakes');
+    this.hydrateSnake = false;
   }
 
   start() {    
     this.initNN();
-    this.neat.population.forEach((genome: any, i: number) => {
-      this.snakes.push(new Snake(genome, this.config, i));
-    });
+    if (this.hydrateSnake) {      
+      this.snakeTable.toArray().then(snakes => {
+        snakes.forEach((snake: any, i: number) => {
+          this.snakes.push(new Snake(JSON.parse(snake.brain), this.config, i));
+          this.neat.population[i] = neataptic.Network.fromJSON(JSON.parse(String(snake.brain)));
+        });
+      });
+    } else { // load fresh snakes from neat
+      this.neat.population.forEach((genome: any, i: number) => {
+        this.snakes.push(new Snake(genome, this.config, i));
+      });
+    }    
     this.started = true;
     this.paused = false;
     this.handleSnakeClick();
-    setTimeout(() => { d3.select('#gen').html('1'); }, 10);
+    setTimeout(() => { d3.select('#gen').html('1'); }, 10); // what is this hack?
     this.tick();
   }  
 
@@ -71,11 +85,12 @@ class Manager {
     this.tick();
   }
 
-  updateSettings(newConfig: IStoreState) {    
+  updateSettings(newConfig: IStoreState, hydrateSnake: boolean = false) {    
     this.config = newConfig;
     if (this.snakes) {
       this.snakes.forEach(snake => snake.updateSettings(newConfig));
     }
+    this.hydrateSnake = hydrateSnake;
   }
 
   private initNN() {
@@ -105,41 +120,61 @@ class Manager {
 
   private async tick() {
     if (!this.started || this.paused) { return; }
-
-    // const sleepTime = this.config.highSpeedReducer.value === true ? 1 : 50;    
-    // await sleep(sleepTime);
     if (!this.config.highSpeedReducer.value) {
       await sleep(50);
     }
+    this.render();    
+  }
+
+  private render() {    
     const that = this;
     let hasEveryoneDied = true;
     let areAllAliveSnakesNegative = true;
     
     this.iterationCounter++;
-    // clone snakes so we don't mess with the originals
-    const clonedSnakes = JSON.parse(JSON.stringify(this.snakes));
-    this.sortSnakes(clonedSnakes);
-
-    ({ hasEveryoneDied, areAllAliveSnakesNegative } = 
-      this.checkHasEveryoneDied(hasEveryoneDied, areAllAliveSnakesNegative));
-
-    if (hasEveryoneDied) {
-      const newLog: IGenerationLogItem[] = this.getCurrentGenerationLog(clonedSnakes);
-      this.generationLog.push(newLog);
-      this.generationTimeLog.push({
-        index: this.generationTimeLog.length
-      });
-      this.drawHistoryGraph();
-      setTimeout(() => { that.breed(); }, 200);
-    } else {
-      setTimeout(() => {
-        this.snakes.forEach((snake, _j) => {
-          snake.look();
-          snake.showCanvas();
-          snake.moveCanvas();
-        }); // tslint:disable-next-line:align
-        that.tick(); }, 1);
+    
+    let i: number = 0;
+    for (i = 0; i < this.snakes.length; i++) {
+      if (this.snakes[i].deaths === 0) {
+        hasEveryoneDied = false; // as long as 1 snake is alive, 'hasEveryoneDied' = false
+        if (this.snakes[i].currentScore > 0) {
+          areAllAliveSnakesNegative = false; // as long as 1 snake has > 0, 'areAllAliveSnakesNegative' = false;
+          break;
+        }
+      }
     }
+    // though not everyone died, but it ticked 10 times & all the snakes are negative scores, we take it as all are dead
+    if (!hasEveryoneDied) {
+      if (this.iterationCounter > 10 && areAllAliveSnakesNegative) {
+        hasEveryoneDied = true;
+      }
+    }    
+    if (hasEveryoneDied) {      
+      // clone snakes so we don't mess with the originals
+      setTimeout(async () => {
+        const clonedSnakes = JSON.parse(JSON.stringify(this.snakes));
+        await that.breed();
+        this.generateHistoryGraph(clonedSnakes);
+        requestAnimationFrame(() => that.tick());
+      },         300); // sleep for 300ms before breeding (let user see the snakes on screen)
+    } else {      
+      requestAnimationFrame(() => {
+        this.snakes.forEach((snake) => {
+          snake.render();
+        });
+        that.tick();
+      });
+    }
+  }
+
+  private generateHistoryGraph(clonedSnakes: any) {
+    this.sortSnakes(clonedSnakes); // we sort the snakes only when all died
+    const newLog: IGenerationLogItem[] = this.getCurrentGenerationLog(clonedSnakes);
+    this.generationLog.push(newLog);
+    this.generationTimeLog.push({
+      index: this.generationTimeLog.length
+    });
+    this.drawHistoryGraph();
   }
 
   private getCurrentGenerationLog(clonedSnakes: any) {
@@ -161,23 +196,6 @@ class Manager {
     return generationLog;
   }
 
-  private checkHasEveryoneDied(hasEveryoneDied: boolean, areAllAliveSnakesNegative: boolean) {
-    for (let i in this.snakes) {
-      if (this.snakes[i].deaths === 0) {
-        hasEveryoneDied = false;
-        if (this.snakes[i].currentScore > 0) {
-          areAllAliveSnakesNegative = false;
-        }
-      }
-    }
-    if (!hasEveryoneDied) {
-      if (this.iterationCounter > 10 && areAllAliveSnakesNegative) {
-        hasEveryoneDied = true;
-      }
-    }
-    return { hasEveryoneDied, areAllAliveSnakesNegative };
-  }
-
   private sortSnakes(clonedSnakes: any) {
     clonedSnakes.forEach((clonedSnake: ISnake, j: number) => {
       clonedSnake.index = j;
@@ -193,14 +211,34 @@ class Manager {
     });
   }
 
-  private breed() {
+  private async breed() {
     this.neat.sort();
-    const newPopulation = [];
+    let newPopulation = [];
     let i;
-
-    // Elitism
+    let currentSnakes: ISnakeDBModel[] = await this.snakeTable.toArray();
+    let sortedSnakes = [...currentSnakes, ...this.neat.population]
+                      .sort(this.snakeSortComparer()).slice(0, 50);
+    // transform snake from db e.g. {id: 30, score: 416, brain: {…}} back to just the brain, so that neat is happy
+    let serializedSnakes: ISnakeDBModel[] = sortedSnakes.map((snake: any, id: number): ISnakeDBModel => {
+      if (!snake.hasOwnProperty('id')) {
+        let brain = JSON.stringify(snake);
+        return { id, score: snake.score, brain: brain };
+      } else { 
+        return { id, score: snake.score, brain: snake.brain }; 
+      }
+    });
+    // persist elite snakes from pool of snakes from db & current run
+    db.transaction('rw', this.snakeTable, async () => {
+      serializedSnakes.forEach((snake: any) => {
+        this.snakeTable.put({
+          id: snake.id, score: snake.score, brain: snake.brain
+        });
+      });
+    });
+    
+    // Elitism top n%
     for (i = 0; i < this.neat.elitism; i++) {
-      newPopulation.push(this.neat.population[i]);
+      newPopulation[i] = neataptic.Network.fromJSON(JSON.parse(String(serializedSnakes[i].brain)));
     }
 
     // Breed the next individuals
@@ -214,14 +252,23 @@ class Manager {
     this.neat.generation++;
     d3.select('#gen').html(this.neat.generation + 1);
     this.snakes = [];
-
     this.neat.population.forEach((_snake: ISnake, j: number) => {
       const newGenome = this.neat.population[j];      
       this.snakes.push(new Snake(newGenome, this.config, j));
     });
-
     this.iterationCounter = 0;
-    this.tick();
+  }
+
+  private snakeSortComparer(): ((a: any, b: any) => number) | undefined {
+    return (a, b) => {
+      let aScore = a.score || 0;
+      let bScore = b.score || 0;
+      if (aScore > bScore) {
+        return -1;
+      } else {
+        return 1;
+      }
+    };
   }
 
   private drawHistoryGraph() {

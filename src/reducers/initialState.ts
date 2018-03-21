@@ -4,11 +4,12 @@ const initialState: IStoreState = {
     running: false,
     paused: false,
     snakes: [],
+    isPortalActive: false,
     hitWallReducer: {
         label: 'Snake dies when it hits a wall.',
         value: true
     },
-    eatSelfReducer: {
+    hitSelfReducer: {
       label: 'Snake dies when it hits self.',
       value: true
     },

@@ -7,6 +7,11 @@ html, body, #root, #root > div {
   font-family: 'Lato', sans-serif;
   font-size: 14px; }
 
+body {
+  min-height: 75rem;
+  padding-top: 3.5rem;
+}
+
 .App {
   display: flex;
   justify-content: space-between;
@@ -18,7 +23,7 @@ html, body, #root, #root > div {
   margin-right: -2px;
   display: inline-block;
   background: #fff; }
-
+  
 .control-menu {
   width: 300px;
   min-width: 300px;

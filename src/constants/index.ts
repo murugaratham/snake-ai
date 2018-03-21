@@ -5,8 +5,8 @@ export type TOGGLE_DIES_WHEN_HIT_WALL = typeof TOGGLE_DIES_WHEN_HIT_WALL;
 
 // Snake dies when hit itself (or not)
 
-export const TOGGLE_DIES_WHEN_EAT_SELF = '@@switch/TOGGLE_DIES_WHEN_EAT_SELF';
-export type TOGGLE_DIES_WHEN_EAT_SELF = typeof TOGGLE_DIES_WHEN_EAT_SELF;
+export const TOGGLE_DIES_WHEN_HIT_SELF = '@@switch/TOGGLE_DIES_WHEN_EAT_SELF';
+export type TOGGLE_DIES_WHEN_HIT_SELF = typeof TOGGLE_DIES_WHEN_HIT_SELF;
 
 // Snake grows when eat (or not)
 
