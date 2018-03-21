@@ -17,6 +17,10 @@ body {
   justify-content: space-between;
   align-items: stretch; }
 
+.grid-item:hover {
+    cursor: pointer;
+}
+
 .grid-item {
   border: 2px solid #E1E4EA;
   margin-top: -3px;
