@@ -20,6 +20,7 @@ Original project by [Peter Binggeser](https://github.com/pbinggeser) didn't have
 - [x] [Rehydrate reducers](https://github.com/rt2zz/redux-persist)
 - [x] Persisting trained snakes in indexedDB [Dexie](https://github.com/dfahlander/Dexie.js) for best trained (50 in indexedDB, 50 randomly mutated snake) brain & optionally letting users to load 
 - [x] Machine learning - This project uses [neataptic](https://github.com/wagenaartje/neataptic)
-- [x] [Webpack analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer)
-- [ ] Travis CI
+- [x] [Webpack analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer) `npm run analyze` will show you what's being packed, and who's taking up most of the space
+- [x] Travis CI
 - [ ] More coming... 
+
