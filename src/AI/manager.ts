@@ -1,11 +1,11 @@
 import Snake, { ISnake, ISnakeDBModel } from './snake';
 import * as d3 from 'd3';
 import * as cola from 'webcola';
-import { calculateQ, atoi, sleep } from './utilities';
+import { calculateQ, atoi, sleep, snakeSortComparer } from './utilities';
 import { IStoreState } from '../types';
-const neataptic = require('./neataptic').neataptic;
 import db from './db';
 import Dexie from 'dexie';
+const neataptic = require('./neataptic').neataptic;
 interface IGraphLineItem {
   score: number;
   generation: number;
@@ -127,12 +127,9 @@ class Manager {
   }
 
   private render() {    
-    const that = this;
     let hasEveryoneDied = true;
-    let areAllAliveSnakesNegative = true;
-    
-    this.iterationCounter++;
-    
+    let areAllAliveSnakesNegative = true;    
+    this.iterationCounter++;    
     let i: number = 0;
     for (i = 0; i < this.snakes.length; i++) {
       if (this.snakes[i].deaths === 0) {
@@ -153,16 +150,16 @@ class Manager {
       // clone snakes so we don't mess with the originals
       setTimeout(async () => {
         const clonedSnakes = JSON.parse(JSON.stringify(this.snakes));
-        await that.breed();
+        await this.breed();
         this.generateHistoryGraph(clonedSnakes);
-        requestAnimationFrame(() => that.tick());
+        requestAnimationFrame(() => this.tick());
       },         300); // sleep for 300ms before breeding (let user see the snakes on screen)
     } else {      
       requestAnimationFrame(() => {
         this.snakes.forEach((snake) => {
           snake.render();
         });
-        that.tick();
+        this.tick();
       });
     }
   }
@@ -217,7 +214,7 @@ class Manager {
     let i;
     let currentSnakes: ISnakeDBModel[] = await this.snakeTable.toArray();
     let sortedSnakes = [...currentSnakes, ...this.neat.population]
-                      .sort(this.snakeSortComparer()).slice(0, 50);
+                      .sort(snakeSortComparer).slice(0, 50);
     // transform snake from db e.g. {id: 30, score: 416, brain: {…}} back to just the brain, so that neat is happy
     let serializedSnakes: ISnakeDBModel[] = sortedSnakes.map((snake: any, id: number): ISnakeDBModel => {
       if (!snake.hasOwnProperty('id')) {
@@ -257,18 +254,6 @@ class Manager {
       this.snakes.push(new Snake(newGenome, this.config, j));
     });
     this.iterationCounter = 0;
-  }
-
-  private snakeSortComparer(): ((a: any, b: any) => number) | undefined {
-    return (a, b) => {
-      let aScore = a.score || 0;
-      let bScore = b.score || 0;
-      if (aScore > bScore) {
-        return -1;
-      } else {
-        return 1;
-      }
-    };
   }
 
   private drawHistoryGraph() {
@@ -423,7 +408,7 @@ class Manager {
     const GATE_RADIUS = 2;
     const REPEL_FORCE = -5;
     const LINK_DISTANCE = 100;
-    const WIDTH = 1000;
+    const WIDTH = 400;
     const HEIGHT = 500;
 
     const d3cola = cola
@@ -448,10 +433,7 @@ class Manager {
       .append('svg:path')
       .attr('d', 'M0,-5L10,0L0,5');
 
-    graph.nodes.forEach(function(v: any) {
-      v.height = v.width = 2 * (v.name === 'GATE' ? GATE_RADIUS : NODE_RADIUS); }
-    );
-  
+    graph.nodes.forEach((v: any) => v.height = v.width = 2 * (v.name === 'GATE' ? GATE_RADIUS : NODE_RADIUS));
     graph.nodes.forEach((v: any) => {
       v.height = 2 * (v.name === 'GATE' ? GATE_RADIUS : NODE_RADIUS);
       v.width = v.height;
@@ -486,9 +468,9 @@ class Manager {
       .enter()
       .append('circle')
       .attr('class', (d: any) => `node ${d.name}`)
-      .attr('r', (d: any) => (d.name === 'GATE' ? GATE_RADIUS : NODE_RADIUS))
-      .on('click', function (d: any) { d.fixed = true; })
-      .call(d3cola.drag);
+      .attr('r', (d: any) => (d.name === 'GATE' ? GATE_RADIUS : NODE_RADIUS));
+      // .on('click', (d: any) => d.fixed = true)
+      // .call(d3cola.drag);
 
     node.append('title').text((d: any) => {
       let text = '';
@@ -504,9 +486,9 @@ class Manager {
       .enter()
       .append('text')
       .attr('class', 'label')
-      .text((d: any) => `(${d.index}) ${d.name}`)
-      .on('click', function (d: any) { d.fixed = true; })
-      .call(d3cola.drag);
+      .text((d: any) => `(${d.index}) ${d.name}`);
+      // .on('click', (d: any) =>  d.fixed = true)
+      // .call(d3cola.drag);
 
     d3cola.on('tick', () => {
       // draw directed edges with proper padding from node centers
@@ -549,25 +531,21 @@ class Manager {
       });
       
       node
-      .attr('cx', function (d: any) {
-        return d.x;
-      })
-      .attr('cy', function (d: any) {
-        return d.y;
-      });
+      .attr('cx', (d: any) => d.x)
+      .attr('cy', (d: any) => d.y);
 
       label
-      .attr('x', function (d: any) {
-        return d.x + 10;
-      })
-      .attr('y', function (d: any) {
-        return d.y - 10;
-      });
+      .attr('x', (d: any) => d.x + 10)
+      .attr('y', (d: any) => d.y - 10);
     });
   }
 
   private handleSnakeClick() {
-    document.addEventListener('click', e => {
+    let eventType = 'click';
+    if ('ontouchstart' in window) {
+      eventType = 'touchstart';
+    }
+    document.addEventListener(eventType, e => {
       let canvasId = String((<HTMLCanvasElement> e.target).id.indexOf('snake-canvas'));
       if (canvasId !== '-1') {
         const selectedSnake = this.snakes[canvasId.substr(canvasId.length - 1)];

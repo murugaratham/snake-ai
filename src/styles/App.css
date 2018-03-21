@@ -24,9 +24,14 @@ body {
   display: inline-block;
   background: #fff; }
   
+  
+  @media only screen and (max-width: 600px) {
+    .control-menu {
+      width: 317px;
+    }
+  }
+
 .control-menu {
-  width: 300px;
-  min-width: 300px;
   background: #E1E4EA;
   padding: 10px;
   overflow-y: auto; }

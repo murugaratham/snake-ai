@@ -82,6 +82,7 @@
       "check-open-brace",
       "check-whitespace"
     ],
+    "only-arrow-functions": true,
     "quotemark": [
       true,
       "single",

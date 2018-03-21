@@ -167,7 +167,7 @@ class App extends Component<{}, IStoreState> {
                   <h3 style={{ marginBottom: 10 }}>Performance by Generation</h3>
                   <div id="graph">{/* graph will load here */}</div>
                   <div className="row">
-                    <svg className="draw" width="800px" height="400px" />
+                    <svg className="draw" width="400px" height="400px" />
                   </div>
                   <p>
                     This graph shows a dot for every individual neural net's

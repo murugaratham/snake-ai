@@ -17,6 +17,6 @@ Original project by [Peter Binggeser](https://github.com/pbinggeser) didn't have
 - [x] Visualize the NN
 - [x] Rehydrate reducers
 - [x] local storage for best trained snake brain & letting user to load 
-- [ ] Machine learning - This project uses [neataptic](https://github.com/wagenaartje/neataptic)
-- [ ] Demystify the actual neural networks (NN)
+- [x] Machine learning - This project uses [neataptic](https://github.com/wagenaartje/neataptic)
+- [x] Demystify the actual neural networks (NN)
 - [ ] More coming... 
