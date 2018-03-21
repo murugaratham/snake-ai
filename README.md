@@ -12,11 +12,12 @@ Original project by [Peter Binggeser](https://github.com/pbinggeser) didn't have
 - [x] [JSX/TSX](http://www.typescriptlang.org/docs/handbook/jsx.html)
 - [x] [TSLint](https://palantir.github.io/tslint/)
 - [x] [Github pages](https://pages.github.com/)
-- [x] Redux
-- [x] Responive web (Material-Ui/Bootstrap)
-- [x] Visualize the NN
-- [x] Rehydrate reducers
-- [x] local storage for best trained snake brain & letting user to load 
+- [x] [Redux](https://github.com/reactjs/redux)
+- [x] Responive web (~~Material-Ui~~/Bootstrap)
+- [x] Visualize the Neural Network (NN), click on any of the snake, the NN will be drawn on screen, hover over nodes & connections to view the weights & functions etc
+- [x] [Rehydrate reducers](https://github.com/rt2zz/redux-persist)
+- [x] Persisting trained snakes in indexedDB [Dexie](https://github.com/dfahlander/Dexie.js) for best trained (50 in indexedDB, 50 randomly mutated snake) brain & optionally letting users to load 
 - [x] Machine learning - This project uses [neataptic](https://github.com/wagenaartje/neataptic)
-- [x] Demystify the actual neural networks (NN)
+- [x] [Webpack analyzer](https://github.com/webpack-contrib/webpack-bundle-analyzer)
+- [ ] Travis CI
 - [ ] More coming... 

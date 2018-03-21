@@ -51,6 +51,6 @@
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
-    "deploy:iis": "npm run predeploy && robocopy ./build/static c:\\inetpub\\wwwroot\\snake-ai /e"
+    "analyze": "node analyze.js"
   }
 }
